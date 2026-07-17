@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 class PinUnlockActivity : AppCompatActivity() {
 
     private var enteredPin = StringBuilder()
+    private var unlocked = false
     private lateinit var pinDisplay: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +52,7 @@ class PinUnlockActivity : AppCompatActivity() {
     private fun checkPin() {
         val storedPin = Prefs.getPin(this)
         if (enteredPin.toString() == storedPin) {
+            unlocked = true
             stopService(Intent(this, OverlayService::class.java))
             finish()
         } else {
@@ -62,5 +64,14 @@ class PinUnlockActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // If we're leaving without a successful unlock, put the touch
+        // lock and floating button back on screen.
+        if (!unlocked) {
+            OverlayService.instance?.restoreOverlaysAfterUnlock()
+        }
     }
 }

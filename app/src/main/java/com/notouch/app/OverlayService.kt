@@ -26,6 +26,7 @@ class OverlayService : Service() {
     companion object {
         const val CHANNEL_ID = "no_touch_channel"
         const val NOTIFICATION_ID = 1
+        var instance: OverlayService? = null
     }
 
     override fun onCreate() {
@@ -35,6 +36,7 @@ class OverlayService : Service() {
         addBlockerOverlay()
         addFloatingButton()
         LockState.isActive = true
+        instance = this
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -70,6 +72,8 @@ class OverlayService : Service() {
     }
 
     private fun addBlockerOverlay() {
+        if (blockerView != null) return
+
         var flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 
@@ -96,6 +100,8 @@ class OverlayService : Service() {
     }
 
     private fun addFloatingButton() {
+        if (floatingButton != null) return
+
         val size = (56 * resources.displayMetrics.density).toInt()
         val params = WindowManager.LayoutParams(
             size,
@@ -112,6 +118,10 @@ class OverlayService : Service() {
             text = "\uD83D\uDD12"
             textSize = 20f
             setOnClickListener {
+                // Remove the overlay windows FIRST so the keypad activity
+                // that's about to open can actually receive touches.
+                hideOverlaysForUnlock()
+
                 val intent = Intent(this@OverlayService, PinUnlockActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
@@ -122,8 +132,23 @@ class OverlayService : Service() {
         floatingButton = button
     }
 
+    /** Called right before showing the PIN keypad. */
+    fun hideOverlaysForUnlock() {
+        blockerView?.let { runCatching { windowManager.removeView(it) } }
+        floatingButton?.let { runCatching { windowManager.removeView(it) } }
+        blockerView = null
+        floatingButton = null
+    }
+
+    /** Called if the user cancels or enters the wrong PIN and leaves the keypad. */
+    fun restoreOverlaysAfterUnlock() {
+        addBlockerOverlay()
+        addFloatingButton()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         LockState.isActive = false
         blockerView?.let { runCatching { windowManager.removeView(it) } }
         floatingButton?.let { runCatching { windowManager.removeView(it) } }

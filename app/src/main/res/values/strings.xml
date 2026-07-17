@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">NoTouch</string>
+    <string name="accessibility_service_description">Lets NoTouch close the notification shade or quick settings if they\'re opened while the touch lock is active, so the lock can\'t be swiped past.</string>
+</resources>

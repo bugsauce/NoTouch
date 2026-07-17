@@ -7,7 +7,7 @@
         android:id="@+id/widgetStartButton"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="\uD83D\uDD12"
+        android:text="&#x1F512;"
         android:textSize="20sp"
         android:background="#DD263238"
         android:textColor="#FFFFFF"
